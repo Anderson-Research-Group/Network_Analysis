@@ -58,9 +58,9 @@ Project Directory            (can be located anywhere, named anything, and this 
                     └─/FE_Data [example]        (only has one file in it)
                         └─Norm_02_FE_Mean.xlsx [example]
 
-Original Work:  Penny Atkins, PhD
+Original Work:  Penny R. Atkins, PhD
                 doi: 10.1007/s10439-023-03270-6
-Modified by:    Rich Lisonbee, MS
+Adapted by:     Rich J. Lisonbee, MS
 Organization:   University of Utah, Orthopaedic Research Laboratory
 PI:             Andrew E. Anderson, PhD
 Date:           1/15/2025

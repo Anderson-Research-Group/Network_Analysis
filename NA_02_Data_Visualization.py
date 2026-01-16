@@ -11,7 +11,7 @@ Needed Files:
     surface (*.vtk or *.stl) and related correspondence model (nx3 particles file, *.txt or *.particles)
     results from NA_01 script (*.xlsx, must be in created architecture)
 
-Created by:     Rich Lisonbee, MS
+Created by:     Rich J. Lisonbee, MS
 Organization:   University of Utah, Orthopaedic Research Laboratory
 PI:             Andrew E. Anderson, PhD
 Date:           1/15/2025
@@ -149,7 +149,7 @@ if len(maps_selection) > 1:
 else:
     map_data = pd.read_excel(os.path.join(proj_dir,'Network_Analysis_Results',result_dir,'Maps',maps_selection[pick0]), header=None).to_numpy()[:,1:]
     map_name = maps_selection[pick0].split('-')[-1].split('.')[0]
-    print(f"Feature Maps: {map_name}")
+    print(f"Feature Map: {map_name}")
 
 
 # %% Function Definitions
@@ -418,9 +418,6 @@ bead_colored        = ColorMap_Assign(cp_idx,bead_merged,color_map_array)
 
 
 # %% Plot - Initial
-import PySimpleGUI as sg
-import tkinter as tk
-import pyvista as pv
 sg.set_options(use_ttk_buttons=False)
 sg.theme('DarkGrey5')
 

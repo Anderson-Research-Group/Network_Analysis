@@ -106,6 +106,8 @@ numpy==2.0.2
     #   scipy
     #   spm1d
     #   trimesh
+openpyxl==3.1.5
+	# via -r python_requirements.in
 packaging==25.0
     # via
     #   matplotlib

@@ -60,7 +60,7 @@ Project Directory                               (can be located anywhere, named 
 
 Original Work:  Penny R. Atkins, PhD
                 doi: 10.1007/s10439-023-03270-6
-Adapted by:     Rich J. Lisonbee, MS
+Adapted by:     Rich J. Lisonbee, MS and Bergen Braun, MS
 Organization:   University of Utah, Orthopaedic Research Laboratory
 PI:             Andrew E. Anderson, PhD
 Date:           1/15/2025
@@ -129,37 +129,40 @@ surface_names_avail = list(set(itertools.chain.from_iterable(surface_names)))
 
 
 # %% User Inputs
-tests_avail = ['two-tailed t-Test', 'paired t-Test']
+tests_avail = ['two-tailed t-test', 'paired t-test']
 # ***User Inputs***
 layout  = [
     [sg.Text('Alpha Value:')],
     [sg.Input('0.05',
-        key='alpha',
+        key='-ALPHA-',
         size=(40,1))],
     [sg.Text('Number of Iterations (null distribution):')],
     [sg.Input('10000',
-        key='num_iter',
+        key='-NUM-ITER-',
         size=(40,1))],
     [sg.Text('Would you like to add regularization?')],
     [sg.Checkbox('Regularization:',
-                 key='regu_opt')],
+                 key='-REGU-OPT-')],
     [sg.Text('Regularization (if yes above)[10^n]')],
     [sg.Input('-12',
-        key='regu',
+        key='-REGU-',
         size=(40,1))],    
     [sg.Text('Test Type:')],
     [sg.OptionMenu(tests_avail,
-        key='test_type',
+        key='-TEST-TYPE-',
         default_value=tests_avail[0],               # single-select
         size=(40, 1))],
     [sg.Text('Surface Selection:')],
     [sg.OptionMenu(surface_names_avail,
-        key='surface',
+        key='-SURFACE-',
         default_value=surface_names_avail[0],       # single-select
         size=(40, 1))],
-    [sg.Text('Circular Shift permutations? (temporal data only)')],
+    [sg.Text('Is it a volumetric correspondence model?')],
+    [sg.Checkbox('Volumetric:',
+                 key='-VOLUMETRIC-')],
+    [sg.Text('Circular Shift permutations? (temporal data only, verify if appropriate)')],
     [sg.Checkbox('Circular Shift:',
-                 key='shift_opt')],    
+                 key='-SHIFT-OPT-')],    
     [sg.Ok(), sg.Cancel()]
 ]
 
@@ -169,14 +172,15 @@ window.close()
 if event == 'Cancel' or event == sg.WIN_CLOSED:
     sys.exit()
 
-alpha_val       = float(values['alpha'])
-num_iterations  = int(values['num_iter'])
-test_type       = tests_avail.index(values['test_type'])
-surf_name       = values['surface']
-shift_opt       = values['shift_opt']
-regu_opt        = values['regu_opt']
+alpha_val       = float(values['-ALPHA-'])
+num_iterations  = int(values['-NUM-ITER-'])
+test_type       = tests_avail.index(values['-TEST-TYPE-'])
+surf_name       = values['-SURFACE-']
+shift_opt       = values['-SHIFT-OPT-']
+regu_opt        = values['-REGU-OPT-']
 if regu_opt:
-    regu_val    = float(values['regu'])
+    regu_val    = float(values['-REGU-'])
+vol_opt         = values['-VOLUMETRIC-']
 # ***
 
 # check if the groups selected are paired, or wish to combine groups (would then need two feature maps for paired comparison)
@@ -368,20 +372,106 @@ mesh_points     = mean_mesh.vertices
 mean_point      = np.loadtxt(mean_point_name)
 mean_shape      = mean_point.reshape(-1, 3)
 
-kdtree          = scipy.spatial.KDTree(mesh_points)
-dist, pts_index = kdtree.query(mean_shape)
-pts_index.mean()
+if not vol_opt:
+    kdtree          = scipy.spatial.KDTree(mesh_points)
+    dist, pts_index = kdtree.query(mean_shape)
+    pts_index.mean()
+    
+    pcd             = o3d.geometry.PointCloud()
+    pcd.points      = o3d.utility.Vector3dVector(mean_shape)
+    pcd.normals     = o3d.utility.Vector3dVector(mesh_normals[pts_index, :])
+    
+    distances       = pcd.compute_nearest_neighbor_distance()
+    avg_dist        = np.mean(distances)
+    radius          = avg_dist * 1.5
+    
+    mesh            = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd,o3d.utility.DoubleVector([radius, radius * 2]))
+    tris            = np.asarray(mesh.triangles)
+elif vol_opt:
+ # todo: update when we have example dataset
+     def subdivide_cube_to_tetrahedra(corners):
+         return [
+             [corners[0], corners[1], corners[3], corners[4]],
+             [corners[1], corners[2], corners[3], corners[6]],
+             [corners[1], corners[4], corners[5], corners[6]],
+             [corners[3], corners[4], corners[6], corners[7]],
+             [corners[1], corners[3], corners[4], corners[6]],
+             [corners[3], corners[6], corners[7], corners[4]],
+         ]    
+     
+     hexahedrons         = mean_mesh.faces
+     volume_connectivity = mean_mesh.faces # todo: what are both of these, and where do we get them? 
+     tetrahedra = []
+     for cube in hexahedrons:  # each cube is a list of 8 point indices
+         tetrahedra.extend(subdivide_cube_to_tetrahedra(cube))
 
-pcd             = o3d.geometry.PointCloud()
-pcd.points      = o3d.utility.Vector3dVector(mean_shape)
-pcd.normals     = o3d.utility.Vector3dVector(mesh_normals[pts_index, :])
+     target_set     = set(cp_ids)
+     
+     tetrahedrons   = [tetra for tetra in volume_connectivity if all(pt in target_set for pt in tetra)]
+     tris           = np.array(tetrahedrons)   
 
-distances       = pcd.compute_nearest_neighbor_distance()
-avg_dist        = np.mean(distances)
-radius          = avg_dist * 1.5
 
-mesh            = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd,o3d.utility.DoubleVector([radius, radius * 2]))
-tris            = np.asarray(mesh.triangles)
+# %% Volumetric Function
+# n = 50 # this defines the density of the grid and should be carried over from when particles are warped -- don't know where the best location for this is or how to label it
+# reader  = vtk.vtkPolyDataReader()
+# reader.SetFileName(mean_model_name)
+# reader.Update()
+# mesh    = reader.GetOutput()
+
+# x = np.linspace(mesh.GetBounds()[0], mesh.GetBounds()[1], n)
+# y = np.linspace(mesh.GetBounds()[2], mesh.GetBounds()[3], n)
+# z = np.linspace(mesh.GetBounds()[4], mesh.GetBounds()[5], n)
+# grid = np.array(np.meshgrid(x, y, z)).reshape(3, -1).T
+
+# implicit_function = vtk.vtkImplicitPolyDataDistance()
+# implicit_function.SetInput(mesh)
+
+# points_inside = []
+# points_index = []
+# for k,pt in enumerate(grid):
+#     if implicit_function.FunctionValue(pt) < 0:  # Negative means inside
+#         points_inside.append(pt)
+#         points_index.append(k)
+
+# point_cloud = pv.PolyData(points_inside)
+
+# nx, ny, nz = n,n,n  # same as your linspace resolution
+# grid_3d = grid.reshape((nx, ny, nz, 3))  # shape: (nx, ny, nz, 3)
+# points_flat = grid_3d.reshape(-1, 3)
+# def corner_indices(i, j, k, nx, ny):
+#     base = lambda a, b, c: a + b * nx + c * nx * ny
+#     return [
+#         base(i, j, k),
+#         base(i+1, j, k),
+#         base(i+1, j+1, k),
+#         base(i, j+1, k),
+#         base(i, j, k+1),
+#         base(i+1, j, k+1),
+#         base(i+1, j+1, k+1),
+#         base(i, j+1, k+1)
+#     ]
+
+# hexahedrons = []
+# for i in range(nx - 1):
+#     for j in range(ny - 1):
+#         for k in range(nz - 1):
+#             corners = corner_indices(i, j, k, nx, ny)
+#             hexahedrons.append(corners)
+
+# hexa_np = np.array(hexahedrons, dtype=np.int64)
+# cell_sizes = np.full((hexa_np.shape[0], 1), 8)
+# cell_array = np.hstack((cell_sizes, hexa_np)).flatten()
+# cell_types = np.full(hexa_np.shape[0], pv.CellType.HEXAHEDRON, dtype=np.uint8)
+
+# def subdivide_cube_to_tetrahedra(corners):
+#     return [
+#         [corners[0], corners[1], corners[3], corners[4]],
+#         [corners[1], corners[2], corners[3], corners[6]],
+#         [corners[1], corners[4], corners[5], corners[6]],
+#         [corners[3], corners[4], corners[6], corners[7]],
+#         [corners[1], corners[3], corners[4], corners[6]],
+#         [corners[3], corners[6], corners[7], corners[4]],
+#     ]
 
 
 #%% Permutations

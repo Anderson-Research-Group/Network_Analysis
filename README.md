@@ -28,7 +28,7 @@ Creates figures (and video if temporal data) of the Network Analysis results and
    
 3. Ready to run the scripts in your preferred IDE or command line  
      *for Sypder users you will need to install spyder-kernels (example below)*
-     >pip install spyder-kernels=3.0  
+     >pip install spyder-kernels==3.0  
   
 ## File Organization    
 Types of tests available:  

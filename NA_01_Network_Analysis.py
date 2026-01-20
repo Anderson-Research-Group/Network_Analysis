@@ -38,25 +38,25 @@ Any folder with a name that needs to be specific is denoted with an asterisk (*)
 Folders are denoted with a forward slash (/) and files will have a file extension (.stl, .csv, etc)
 
 How the project directory should look...
-Project Directory            (can be located anywhere, named anything, and this is what you will select when you first run the script)
-    └─/Data*                 (./Data contains all necessary data, structure is required for importing properly)    
-        ├─/Group_A           (group folders)
+Project Directory                               (can be located anywhere, named anything, and this is what you will select when you first run the script)
+    └─/Data*                                    (./Data contains all necessary data, structure is required for importing properly)    
+        ├─/Group_A                              (group folders)
         ├─/Group_B
         ...
-        └─/Controls [example]
-            ├─/Subject_01    (subject-specific folders)
+        └─/Controls                             [example]
+            ├─/Subject_01                       (subject-specific folders)
             ├─/Subject_02
             ...
-            └─Norm_12 [example]
+            └─Norm_12                           [example]
                 ├─/Surface_01
                 ├─/Surface_02
                 ...
-                └─/Pelvis [example]
+                └─/Pelvis                       [example]
                     ├─/Mapped_Data_01
                     ├─/Mapped_Data_02
                     ...
-                    └─/FE_Data [example]        (only has one file in it)
-                        └─Norm_02_FE_Mean.xlsx [example]
+                    └─/FE_Data                  [example] (only has one file in it)
+                        └─Norm_02_FE_Mean.xlsx  [example]
 
 Original Work:  Penny R. Atkins, PhD
                 doi: 10.1007/s10439-023-03270-6
@@ -69,6 +69,7 @@ Modified by:
 Date:
 
 '''
+
 import numpy as np
 import pandas as pd
 import trimesh
@@ -80,7 +81,7 @@ import spm1d
 import scipy.spatial
 import scipy
 import tkinter as tk
-import PySimpleGUI as sg
+import FreeSimpleGUI as sg
 import time
 import os, sys
 

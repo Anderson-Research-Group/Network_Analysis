@@ -1,5 +1,5 @@
 # Network_Analysis
-Code for computing and visualizing Network Analysis results for spatiotemporal data. 
+Code for computing and visualizing Network Analysis results for spatial or spatiotemporal data. 
  
 ##### NA_01_Network_Analysis.py  
 Performs spatiotemporal statistical analysis on mapped data at correspondence locations (particles) between different groups or between two different mapped data (sometimes referred to as feature maps).  

@@ -74,7 +74,7 @@ Project Directory (can be located anywhere, named anything, and this is what you
 &emsp;&emsp;&emsp;&emsp;&emsp;└─/FE_Data [example]        (only has one file in it)  
 &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;└─Norm_02_FE_Mean.xlsx [example]  
   
-### Python Dependencies (Linux/macOS/Windows 
+### Python Dependencies (Linux/macOS/Windows) 
    numpy  
    pandas  
    trimesh  

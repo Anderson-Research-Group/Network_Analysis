@@ -5,7 +5,7 @@ Code for computing and visualizing Network Analysis results for spatial or spati
 Maps data from a spreadsheet (.csv, where each row is a FaceID and each column is a timepoint, requiring the first column to be the FaceID) to the correspondence model for each subject.  
 
  
-##### NA_01_Network_Analysis.py  
+##### NA_00_Network_Analysis.py  
 Performs spatiotemporal statistical analysis on mapped data at correspondence locations (particles) between different groups or between two different mapped data (sometimes referred to as feature maps).  
   
 The results of this analysis will be saved in the project directory under /*proj_dir*/Network_Analysis_Results/Analysis_*date*_*time*/Stats and the combined map data (group mean at particle) under ../Maps

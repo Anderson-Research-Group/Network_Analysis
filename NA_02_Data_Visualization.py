@@ -14,7 +14,7 @@ Needed Files:
 Created by:     Rich J. Lisonbee, MS
 Organization:   University of Utah, Orthopaedic Research Laboratory
 PI:             Andrew E. Anderson, PhD
-Date:           1/15/2025
+Date:           1/15/2026
 
 Modified by:
 Date:
@@ -26,7 +26,7 @@ import pandas as pd
 import matplotlib
 import pyvista as pv
 import tkinter as tk
-import PySimpleGUI as sg
+import FreeSimpleGUI as sg
 import re
 import imageio.v2 as imageio
 import io
@@ -36,7 +36,6 @@ os.system('cls||clear')
 np.random.seed(0)
 
 sg.set_options(use_ttk_buttons=False)
-sg.theme('DarkGrey5')
 
 
 # %% Project Directory
@@ -419,7 +418,6 @@ bead_colored        = ColorMap_Assign(cp_idx,bead_merged,color_map_array)
 
 # %% Plot - Initial
 sg.set_options(use_ttk_buttons=False)
-sg.theme('DarkGrey5')
 
 surf_color, surf_trans, glyph_scale, disc_color, cmap_choice, cbar_inc, cbar_dir, clim, window_size = ColorPicker(clim=clim,window_size=window_size)
 cmap_array, clim    = ColorMap_Bin(map_data,bead_merged,clim=clim,cmap_choice=cmap_choice)

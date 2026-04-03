@@ -14,9 +14,6 @@ REM install shapeworks deps
 call conda create --yes --name %CONDAENV% python=3.9 pip=25.2 openssl==3.6.0 || goto :error
 call conda activate %CONDAENV%
 
-REM different versions of open3d for different OSes, so we install it manually here
-call pip install open3d==0.19.0 || goto :error
-
 REM reactivate network_analysis environment
 call conda activate base
 call conda activate %CONDAENV%

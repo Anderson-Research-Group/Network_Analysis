@@ -44,7 +44,6 @@ flask==3.1.2
     # via
     #   -r python_requirements.in
     #   dash
-    #   open3d
 fonttools==4.60.2
     # via matplotlib
 idna==3.11
@@ -102,14 +101,13 @@ numpy==2.0.2
     #   contourpy
     #   imageio
     #   matplotlib
-    #   open3d
     #   pandas
     #   pyvista
     #   scipy
     #   spm1d
     #   trimesh
-open3d==0.19.0
-    # via -r python_requirements.in
+openpyxl==3.1.5
+	# via -r python_requirements.in
 packaging==25.0
     # via
     #   matplotlib
@@ -140,7 +138,7 @@ pygments==2.19.2
     # via ipython
 pyparsing==3.3.1
     # via matplotlib
-pysimplegui==5.0.8.3
+freesimplegui==5.2.0.post1
     # via -r python_requirements.in
 python-dateutil==2.9.0.post0
     # via
@@ -207,7 +205,6 @@ werkzeug==3.1.5
     # via
     #   dash
     #   flask
-    #   open3d
 widgetsnbextension==4.0.15
     # via ipywidgets
 zipp==3.23.0

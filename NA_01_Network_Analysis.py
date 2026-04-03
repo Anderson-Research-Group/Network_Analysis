@@ -408,70 +408,7 @@ elif vol_opt:
      target_set     = set(cp_ids)
      
      tetrahedrons   = [tetra for tetra in volume_connectivity if all(pt in target_set for pt in tetra)]
-     tris           = np.array(tetrahedrons)   
-
-
-# %% Volumetric Function
-# n = 50 # this defines the density of the grid and should be carried over from when particles are warped -- don't know where the best location for this is or how to label it
-# reader  = vtk.vtkPolyDataReader()
-# reader.SetFileName(mean_model_name)
-# reader.Update()
-# mesh    = reader.GetOutput()
-
-# x = np.linspace(mesh.GetBounds()[0], mesh.GetBounds()[1], n)
-# y = np.linspace(mesh.GetBounds()[2], mesh.GetBounds()[3], n)
-# z = np.linspace(mesh.GetBounds()[4], mesh.GetBounds()[5], n)
-# grid = np.array(np.meshgrid(x, y, z)).reshape(3, -1).T
-
-# implicit_function = vtk.vtkImplicitPolyDataDistance()
-# implicit_function.SetInput(mesh)
-
-# points_inside = []
-# points_index = []
-# for k,pt in enumerate(grid):
-#     if implicit_function.FunctionValue(pt) < 0:  # Negative means inside
-#         points_inside.append(pt)
-#         points_index.append(k)
-
-# point_cloud = pv.PolyData(points_inside)
-
-# nx, ny, nz = n,n,n  # same as your linspace resolution
-# grid_3d = grid.reshape((nx, ny, nz, 3))  # shape: (nx, ny, nz, 3)
-# points_flat = grid_3d.reshape(-1, 3)
-# def corner_indices(i, j, k, nx, ny):
-#     base = lambda a, b, c: a + b * nx + c * nx * ny
-#     return [
-#         base(i, j, k),
-#         base(i+1, j, k),
-#         base(i+1, j+1, k),
-#         base(i, j+1, k),
-#         base(i, j, k+1),
-#         base(i+1, j, k+1),
-#         base(i+1, j+1, k+1),
-#         base(i, j+1, k+1)
-#     ]
-
-# hexahedrons = []
-# for i in range(nx - 1):
-#     for j in range(ny - 1):
-#         for k in range(nz - 1):
-#             corners = corner_indices(i, j, k, nx, ny)
-#             hexahedrons.append(corners)
-
-# hexa_np = np.array(hexahedrons, dtype=np.int64)
-# cell_sizes = np.full((hexa_np.shape[0], 1), 8)
-# cell_array = np.hstack((cell_sizes, hexa_np)).flatten()
-# cell_types = np.full(hexa_np.shape[0], pv.CellType.HEXAHEDRON, dtype=np.uint8)
-
-# def subdivide_cube_to_tetrahedra(corners):
-#     return [
-#         [corners[0], corners[1], corners[3], corners[4]],
-#         [corners[1], corners[2], corners[3], corners[6]],
-#         [corners[1], corners[4], corners[5], corners[6]],
-#         [corners[3], corners[4], corners[6], corners[7]],
-#         [corners[1], corners[3], corners[4], corners[6]],
-#         [corners[3], corners[6], corners[7], corners[4]],
-#     ]
+     tris           = np.array(tetrahedrons)
 
 
 #%% Permutations

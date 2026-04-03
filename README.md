@@ -1,5 +1,9 @@
 # Network_Analysis
 Code for computing and visualizing Network Analysis results for spatial or spatiotemporal data. 
+
+##### NA_01_Network_Analysis.py  
+Maps data from a spreadsheet (.csv, where each row is a FaceID and each column is a timepoint, requiring the first column to be the FaceID) to the correspondence model for each subject.  
+
  
 ##### NA_01_Network_Analysis.py  
 Performs spatiotemporal statistical analysis on mapped data at correspondence locations (particles) between different groups or between two different mapped data (sometimes referred to as feature maps).  

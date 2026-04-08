@@ -58,12 +58,12 @@ Project Directory                               (can be located anywhere, named 
                     └─/FE_Data                  [example] (only has one file in it)
                         └─Norm_02_FE_Mean.xlsx  [example]
 
-Original Work:  Penny R. Atkins, PhD
-                doi: 10.1007/s10439-023-03270-6
-Adapted by:     Rich J. Lisonbee, MS and Bergen Braun, MS
-Organization:   University of Utah, Orthopaedic Research Laboratory
-PI:             Andrew E. Anderson, PhD
-Date:           1/15/2026
+Original Methods:   Penny R. Atkins, PhD
+                    doi: 10.1007/s10439-023-03270-6
+Code by:            Rich J. Lisonbee, MS and Bergen Braun, MS
+Organization:       University of Utah, Orthopaedic Research Laboratory
+PI:                 Andrew E. Anderson, PhD
+Date:               1/15/2026
 
 Modified by:
 Date:

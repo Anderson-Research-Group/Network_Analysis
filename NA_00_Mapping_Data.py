@@ -53,18 +53,12 @@ Date:
 import numpy as np
 import pandas as pd
 import trimesh
-import pyvista as pv
-import itertools
-import open3d as o3d
 import scipy
-import spm1d
 import scipy.spatial
 import scipy
 import tkinter as tk
 import FreeSimpleGUI as sg
-import time
-from pathlib import Path
-import os, sys
+import os
 import warnings
 
 os.system('cls||clear')
@@ -127,7 +121,11 @@ if map_type == 0:
         [sg.Listbox(surf_option,
             key='-SURFA-',
             select_mode=sg.LISTBOX_SELECT_MODE_SINGLE,    # single-select
-            size=(40, 3))],   
+            size=(40, 3))],
+        [sg.Text('Distance limit from face centers to include particle in analysis (set to 0 to grab all particles, ignoring distance):')],
+        [sg.Input('0',
+            key='-DISTA-',
+            size=(40, 3))],  
         [sg.Ok(), sg.Cancel()]
     ]
     
@@ -136,6 +134,7 @@ if map_type == 0:
     window.close()
     
     surfA_id = values['-SURFA-'][0]
+    dist_roi = float(values['-DISTA-'][0])
     #  ***
 else:
     # ***Surface Selection UI***
@@ -183,7 +182,28 @@ for subject in subject_folders:
     
     if map_type == 0:
         # SurfaceA to ParticlesA
-        print()
+        # Load Surfaces
+        meshA_name = [name for name in os.listdir(os.path.join(nmap_dir,subject,surfA_id)) if name.endswith('.stl')]
+        if len(meshA_name) > 1:
+            warnings.warn(f"{subject} has more than one surface in the {surfA_id} folder")
+            
+        # Load Particles
+        partA_name = [name for name in os.listdir(os.path.join(nmap_dir,subject,surfA_id)) if name.endswith('.particles')]
+        if len(partA_name) > 1:
+            warnings.warn(f"{subject} has more than one particles file in the {surfA_id} folder")
+        partA.append(np.loadtxt(os.path.join(nmap_dir, subject, surfA_id, partA_name[0])))
+        
+        # switches to mesh B for later logic consistency...
+        meshB.append(trimesh.load(os.path.join(nmap_dir, subject, surfA_id, meshA_name[0])))
+        
+        if np.abs(dist_roi) > 0:
+            tree    = scipy.spatial.cKDTree(partA[n])
+            ind1    = tree.query_ball_point(meshB[n].triangles_center,r=2)
+    
+            cp_list.append(np.unique(np.array(np.concatenate(ind1),dtype=int)))
+        else:
+            cp_list.append(list(range(0,len(partA[n]),1)))
+        
     else:
         # Load Surfaces
         meshA_name = [name for name in os.listdir(os.path.join(nmap_dir,subject,surfA_id)) if name.endswith('.stl')]
@@ -227,7 +247,7 @@ for subject in subject_folders:
 
         cp_list.append(np.unique(np.array(np.concatenate(indices),dtype=int)))
         loc.append(locations)
-        n += 1
+    n += 1
 
 sets = [set(arr) for arr in cp_list]
 temp = set.intersection(*sets)
@@ -256,8 +276,8 @@ for n in range(len(subject_folders)):
         for col in range(1,len(data[n][0,:])):
             x_mean.append(np.mean(data[n][i_rows,col]))
             x_max.append(np.max(data[n][i_rows,col]))
-        x_max = np.array(x_max)
-        x_mean = np.array(x_mean)
+        x_max   = np.array(x_max)
+        x_mean  = np.array(x_mean)
       
         local_max   = np.vstack((local_max,   x_max))
         local_mean  = np.vstack((local_mean, x_mean))

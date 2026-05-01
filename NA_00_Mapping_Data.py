@@ -24,7 +24,7 @@ Folders are denoted with a forward slash (/) and files will have a file extensio
 
 How the project directory should look...
 Project Directory                                   (can be located anywhere, named anything, and this is what you will select when you first run the script)
-    └─/Data_Needs_Mapped*                           (./Data contains all necessary data, structure is required for importing properly)    
+    └─/Data_Needs_Mapped                            (./Data_Needs_Mapped contains all necessary data, structure is required for importing properly)    
         ├─/Subject_01                               (subject-specific folders)
         ├─/Subject_02
         ...
@@ -38,7 +38,7 @@ Project Directory                                   (can be located anywhere, na
                 ...
                 ├─/norm12_pelvis_local.particles    [example]
                 └─/norm12_pelvis.stl                [example]
-            └─Norm_02_FE_Mean.xlsx                  [example] (sits at same level as surface folders, data to be mapped)
+            └─Norm_02_FE_Mean.csv                   [example] (sits at same level as surface folders, data to be mapped)
 
 Created by:     Rich J. Lisonbee, MS
 Organization:   University of Utah, Orthopaedic Research Laboratory
@@ -70,7 +70,9 @@ print('Network Analysis - 00')
 # Project Directory
 sg.popup('Please select the Project Directory with the Data_Needs_Mapped folder and nested subject-specific folders containing the particles file (.txt or .particles), feature map (.csv), and surface (.stl) files', keep_on_top=True)
 proj_dir = tk.filedialog.askdirectory(title="Project Directory (don't select Data_Needs_Mapped)", initialdir=os.getcwd())
-nmap_dir = os.path.join(proj_dir,'Data_Needs_Mapped')
+# nmap_dir = os.path.join(proj_dir,'Data_Needs_Mapped')
+sg.popup('Please select the Data_Needs_Mapped folder', keep_on_top=True)
+nmap_dir = tk.filedialog.askdirectory(title="Folder of data that needs mapped", initialdir=proj_dir)
 
 if not os.path.exists(nmap_dir):
     warnings.warn("Required folder '\Data_Needs_Mapped' does not exist!")
@@ -99,6 +101,10 @@ layout  = [
     [sg.Input('FE_Data',
         key='-FEAT-NAME-',
         size=(40,1))],
+    [sg.Text('Process specific frame? (leave blank if you want to process full activity, otherwise enter frame number starting at 1 for the first frame)')],
+    [sg.Input('',
+        key='-FRAME-',
+        size=(40,1))],
     # [sg.Text('Move surface file to the output folder?')],
     # [sg.Checkbox('[check for yes to move, leave blank for no to make a copy instead]',
     #     key='-MOVE_SURF-')],
@@ -110,6 +116,10 @@ window.close()
 
 # move_surf   = values['-MOVE_SURF-']
 feat_name   = values['-FEAT-NAME-']
+if values['-FRAME-'] != '':
+    frame_sel   = abs(int(values['-FRAME-']))
+else:
+    frame_sel = -1
 # ***
 
 map_type = [k for k, v in values.items() if v is True][0]
@@ -172,23 +182,28 @@ id_list = []
 data    = []
 subject_folders = os.listdir(nmap_dir)
 n       = 0
+# todo: save mappings so users can load them rather than needing to process multiple times for different features...
+# it is a lot of bookkeeping and file management
 for subject in subject_folders:
     print(subject)
     
-    data_name = [name for name in os.listdir(os.path.join(nmap_dir,subject)) if name.endswith('.csv')]
+    data_name = [name for name in os.listdir(os.path.join(nmap_dir,subject)) if name.endswith(('.csv','.xlsx'))]
     if len(data_name) > 1:
         warnings.warn(f"{subject} has more than one feature data in its folder")
-    data.append(np.genfromtxt(os.path.join(nmap_dir,subject,data_name[0]),delimiter=','))
+    if data_name[0].endswith('.csv'):
+        data.append(np.genfromtxt(os.path.join(nmap_dir,subject,data_name[0]),delimiter=','))
+    elif data_name[0].endswith('.xlsx'):
+        data.append(pd.read_excel(os.path.join(nmap_dir,subject,data_name[0])).to_numpy())
     
     if map_type == 0:
         # SurfaceA to ParticlesA
         # Load Surfaces
-        meshA_name = [name for name in os.listdir(os.path.join(nmap_dir,subject,surfA_id)) if name.endswith('.stl')]
+        meshA_name = [name for name in os.listdir(os.path.join(nmap_dir,subject,surfA_id)) if name.endswith(('.stl','.obj','.ply'))]
         if len(meshA_name) > 1:
             warnings.warn(f"{subject} has more than one surface in the {surfA_id} folder")
             
         # Load Particles
-        partA_name = [name for name in os.listdir(os.path.join(nmap_dir,subject,surfA_id)) if name.endswith('.particles')]
+        partA_name = [name for name in os.listdir(os.path.join(nmap_dir,subject,surfA_id)) if name.endswith(('.particles','.txt'))]
         if len(partA_name) > 1:
             warnings.warn(f"{subject} has more than one particles file in the {surfA_id} folder")
         partA.append(np.loadtxt(os.path.join(nmap_dir, subject, surfA_id, partA_name[0])))
@@ -206,11 +221,11 @@ for subject in subject_folders:
         
     else:
         # Load Surfaces
-        meshA_name = [name for name in os.listdir(os.path.join(nmap_dir,subject,surfA_id)) if name.endswith('.stl')]
+        meshA_name = [name for name in os.listdir(os.path.join(nmap_dir,subject,surfA_id)) if name.endswith(('.stl','.obj','.ply'))]
         if len(meshA_name) > 1:
             warnings.warn(f"{subject} has more than one surface in the {surfA_id} folder")
             
-        meshB_name = [name for name in os.listdir(os.path.join(nmap_dir,subject,surfB_id)) if name.endswith('.stl')]
+        meshB_name = [name for name in os.listdir(os.path.join(nmap_dir,subject,surfB_id)) if name.endswith(('.stl','.obj','.ply'))]
         if len(meshA_name) > 1:
             warnings.warn(f"{subject} has more than one surface in the {surfB_id} folder")
         
@@ -218,7 +233,7 @@ for subject in subject_folders:
         meshB.append(trimesh.load(os.path.join(nmap_dir, subject, surfB_id, meshB_name[0])))
         
         # Load Particles
-        partA_name = [name for name in os.listdir(os.path.join(nmap_dir,subject,surfA_id)) if name.endswith('.particles')]
+        partA_name = [name for name in os.listdir(os.path.join(nmap_dir,subject,surfA_id)) if name.endswith(('.particles','.txt'))]
         if len(partA_name) > 1:
             warnings.warn(f"{subject} has more than one particles file in the {surfA_id} folder")
         partA.append(np.loadtxt(os.path.join(nmap_dir, subject, surfA_id, partA_name[0])))
@@ -261,21 +276,32 @@ max_data    = []
 mean_data   = []
 near_data   = []
 for n in range(len(subject_folders)):
+    # remove rows with nans in case there was header information 
+    data[n] = data[n][~np.isnan(data[n]).all(axis=1)]
     face_centers        = meshB[n].triangles_center
     face_ids            = np.array(data[n][:,0],dtype=int)
     tree                = scipy.spatial.cKDTree(partA[n][i_cp])
     distances, indices  = tree.query(face_centers[face_ids])
     
-    local_max   = np.empty((0, len(data[n][0,1:])))
-    local_mean  = np.empty((0, len(data[n][0,1:])))
+    if frame_sel > 0:
+        local_max   = np.empty((0, 1))
+        local_mean  = np.empty((0, 1))
+    else:
+        local_max   = np.empty((0, len(data[n][0,1:])))
+        local_mean  = np.empty((0, len(data[n][0,1:])))
     i = np.unique(indices)
     for idx in range(len(i)):
         i_rows = np.where(indices == i[idx])
         x_max = []
         x_mean = []
-        for col in range(1,len(data[n][0,:])):
+        if frame_sel > 0:
+            col = frame_sel
             x_mean.append(np.mean(data[n][i_rows,col]))
             x_max.append(np.max(data[n][i_rows,col]))
+        elif frame_sel == -1:
+            for col in range(1,len(data[n][0,:])):
+                x_mean.append(np.mean(data[n][i_rows,col]))
+                x_max.append(np.max(data[n][i_rows,col]))
         x_max   = np.array(x_max)
         x_mean  = np.array(x_mean)
       
@@ -293,10 +319,6 @@ for n in range(len(subject_folders)):
     t = np.array(t)   
     
     near_data.append(t)
-    
-data_feat_mean = np.array(mean_data)
-data_feat_max  = np.array(max_data)
-data_feat_near = np.array(near_data)
 
 
 # %% Save Data
@@ -318,6 +340,7 @@ for n in range(len(subject_folders)):
     df = pd.DataFrame(np.hstack((i_cp.reshape(-1,1),near_data[n])))
     df.to_excel(os.path.join(subj_out, feat_name + '_Near_Results.xlsx'),index = False, header=False)  
 
+print(feat_name)
 print(f'Results Output: {out_dir}')
 print('Complete!')
 print('')

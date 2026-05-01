@@ -10,7 +10,7 @@ REM update anaconda
 call conda config --add channels anaconda
 call conda config --add channels conda-forge
 
-REM install shapeworks deps
+REM install network_analysis deps
 call conda create --yes --name %CONDAENV% python=3.9 pip=25.2 openssl==3.6.0 || goto :error
 call conda activate %CONDAENV%
 

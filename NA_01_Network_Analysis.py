@@ -345,7 +345,7 @@ if test_type == 0:
     snpm = spm1d.stats.nonparam.ttest2(A,B)
     # degree of freedom
     df = len(np.where(group_ids == 0)[0]) + len(np.where(group_ids == 1)[0]) - 2
-    snpmi = snpm.inference(alpha_val, two_tailed=True, iterations=10000, force_iterations=True)
+    snpmi = snpm.inference(alpha_val, two_tailed=True, iterations=num_iterations , force_iterations=True)
 
 if test_type == 1:
     # paired two-tailed t-test 

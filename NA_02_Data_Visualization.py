@@ -46,6 +46,12 @@ proj_dir = tk.filedialog.askdirectory(title="Select a folder", initialdir=os.get
 # %% Results Selection
 result_dir_names = [name for name in os.listdir(os.path.join(proj_dir,'Network_Analysis_Results'))]
 
+# remove figure settings from choices if it is there
+try:
+    del result_dir_names[result_dir_names.index('Figure_Settings')]
+except ValueError:
+    pass
+
 # ***Result Selection UI***
 layout  = [
     [sg.Text('Result Selection:')],
@@ -389,6 +395,63 @@ sg.popup('Please select the Particles file for:\n' f'{mean_model_name}', keep_on
 mean_point_name = tk.filedialog.askopenfilename(title="Select Particles", initialdir=mean_model_name.split('/')[:-1],filetypes=[("particles",'*.particles'),("txt",'*.txt')])
 
 
+# %% Load Previous Camera Orientation
+# window init
+pos     = []
+focal   = []
+vup     = []
+
+window_size = (900, 900)
+
+load_cam = False
+
+if os.path.isdir(os.path.join(proj_dir,'Network_Analysis_Results','Figure_Settings')):
+    setting_names = []
+    setting_names = [name for name in os.listdir(os.path.join(proj_dir,'Network_Analysis_Results','Figure_Settings')) if name.split('.')[-1] == 'txt']
+    
+    # ***Break Loop UI***
+    layout  = [
+        [sg.Text('Load previous camera settings?')],
+        [sg.Checkbox('Check to Load:',
+                     key='-CAM-')],        
+        [sg.Ok()]
+    ]
+    window = sg.Window("Figure Settings", layout, modal=True)
+    event, values = window.read()
+    window.close()
+
+    if event == sg.WIN_CLOSED:
+        sys.exit()
+    # ***
+    
+    load_cam = values['-CAM-']
+    
+    if load_cam: 
+        # ***Stats Result Selection UI***
+        layout  = [
+            [sg.Text('Camera Settings:')],
+            [sg.Listbox(setting_names,
+                key='-CAM-CHOICE-',
+                select_mode=sg.LISTBOX_SELECT_MODE_SINGLE,
+                size=(30, 5))],   
+            [sg.Ok(), sg.Cancel()]
+        ]
+    
+        window = sg.Window("Feature Maps Selection", layout, modal=True, keep_on_top=True)
+        event, values = window.read()
+        window.close()
+    
+        cam_selection = values['-CAM-CHOICE-'][0]
+        #  ***
+        
+        temp = np.loadtxt(os.path.join(proj_dir,'Network_Analysis_Results','Figure_Settings',cam_selection),delimiter=',')
+        pos     = temp[0,:]
+        focal   = temp[1,:]
+        vup     = temp[2,:]
+        
+        window_size = (int(temp[3,0]), int(temp[3,1]))
+
+
 # %% Load Beads and Discs
 model = pv.read(mean_model_name)
 model.compute_normals(inplace=True)
@@ -405,11 +468,7 @@ disc_merged     = Particle_PointCloud_Disc(model,point,point_sig_rand)
 # disc_merged     = Particle_PointCloud_Disc(model,point,point_sig)
 # print(disc_merged)
 
-# window init
-pos     = []
-focal   = []
-vup     = []
-window_size = (900, 900)
+
 # colorbar init
 cmap_array, clim    = ColorMap_Bin(map_data,bead_merged,clim=None)
 color_map_array     = cmap_array[0]
@@ -425,8 +484,11 @@ color_map_array     = cmap_array[0]
 bead_colored        = ColorMap_Assign(cp_idx,bead_merged,color_map_array)
 prev_scale          = glyph_scale
 
+sg.popup('Reminder that the particles shown are randomly generated for visualization purposes!', keep_on_top=True)
+
 k = 0
 adjust_settings = 1
+append_text = ''
 while adjust_settings == 1: 
     # grab previous values...
     prev_pos, prev_focal, prev_vup = pos, focal, vup
@@ -453,6 +515,8 @@ while adjust_settings == 1:
     
     if k == 0:
         k = 1
+        if load_cam:
+            plotter.camera_position = (pos, focal, vup)  
     elif k == 1:
         plotter.camera_position = (pos, focal, vup)   
     plotter.render()
@@ -467,9 +531,15 @@ while adjust_settings == 1:
         [sg.Radio('Yes (Camera/Orientation)', group_id=1, default=True),
          sg.Radio('Yes (Figure Settings)', group_id=1),
          sg.Radio('No (Proceed)', group_id=1)],
+        [sg.Text('Text to append to file name:')],
+        [sg.Input(append_text,
+            key='-APPEND-',
+            size=(40,1))],
+        [sg.Checkbox('Save camera orientation:',
+                     key='-CAM-')],        
         [sg.Ok()]
     ]
-    window = sg.Window("Combination", layout, modal=True)
+    window = sg.Window("Continue changing setttings...", layout, modal=True)
     event, values = window.read()
     window.close()
 
@@ -481,6 +551,9 @@ while adjust_settings == 1:
     
     if values[2]:
         adjust_settings = 0
+    
+    append_text = values['-APPEND-']
+    save_set    = values['-CAM-']
     # ***
     
     cmap_array, clim    = ColorMap_Bin(map_data,bead_merged,clim=clim,cmap_choice=cmap_choice)
@@ -521,7 +594,10 @@ for time_point in range(len(data[0,1:])):
     plotter.disable()
     plotter.show()
     print(time_point)
-    plotter.screenshot(os.path.join(out_dir,f'fig_{time_point}.tiff'))
+    if append_text == '':
+        plotter.screenshot(os.path.join(out_dir,f'fig_{time_point}.tiff'))
+    else:
+        plotter.screenshot(os.path.join(out_dir,f'fig_{time_point}_{append_text}.tiff'))
     plotter.close()
 
 # save colorbar just in case
@@ -537,6 +613,31 @@ plotter.screenshot(os.path.join(out_cmap,f'Color_Map_{cmap_choice}.tiff'))
 plotter.close()
 
 
+# %% Save Figure Settings
+if save_set:
+    fig_set_dir = os.path.join(proj_dir,'Network_Analysis_Results','Figure_Settings')
+    os.makedirs(fig_set_dir, exist_ok=True)
+    
+    # ***Figure Settings UI***
+    layout  = [
+        [sg.Text('Name of Figure Settings File')],
+        [sg.Input('cam_position_0',
+            key='-FILE-NAME-',
+            size=(40,1))],     
+        [sg.Ok()]
+    ]
+    window = sg.Window("Figure Settings", layout, modal=True)
+    event, values = window.read()
+    window.close()
+
+    if event == sg.WIN_CLOSED:
+        sys.exit()
+    fig_set_name = values['-FILE-NAME-']
+    # ***
+    
+    np.savetxt(os.path.join(fig_set_dir,fig_set_name + '.txt'), np.array((pos, focal, vup, (window_size[0], window_size[1] ,0))), delimiter=',')    
+
+
 # %% Video Creation (stitching together the .tiff files from last section)
 def sorted_alphanumeric(data):
     convert = lambda text: int(text) if text.isdigit() else text.lower()
@@ -545,7 +646,10 @@ def sorted_alphanumeric(data):
 
 # Create Video (only if more than one timepoint)
 if len(data[0,1:]) > 1:
-    vid_output = os.path.join(out_dir,f'Video_{map_name}.mp4')
+    if append_text == '':
+        vid_output = os.path.join(out_dir,f'Video_{map_name}.mp4')
+    else:
+        vid_output = os.path.join(out_dir,f'Video_{map_name}_{append_text}.mp4')
     frames = [name for name in os.listdir(out_dir) if name.split('.')[-1] == 'tiff']
     
     frames = sorted_alphanumeric(frames)
